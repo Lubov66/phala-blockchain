@@ -114,7 +114,7 @@ export class OnChainRegistry {
   }
 
   get phactory() {
-    if (!this.#ready || !this.#phactory) {
+    if (!this.#phactory) {
       throw new Error('You need initialize OnChainRegistry first.')
     }
     return this.#phactory
@@ -184,11 +184,14 @@ export class OnChainRegistry {
   public async getClusterInfoById(clusterId: string) {
     const result = (await this.api.query.phalaPhatContracts.clusters(clusterId)) as Option<ClusterInfo>
     if (result.isNone) {
-      return null
+      return undefined
     }
     return result.unwrap()
   }
 
+  /**
+   * @deprecated
+   */
   public async getClusters(clusterId?: string) {
     if (clusterId) {
       const result = (await this.api.query.phalaPhatContracts.clusters(clusterId)) as Option<ClusterInfo>
@@ -201,6 +204,9 @@ export class OnChainRegistry {
     }
   }
 
+  /**
+   * @deprecated
+   */
   public async getEndpoints(workerId?: U8aFixed | string) {
     if (workerId) {
       if (typeof workerId !== 'string') {
@@ -215,6 +221,9 @@ export class OnChainRegistry {
     })
   }
 
+  /**
+   * @deprecated
+   */
   public async getClusterWorkers(clusterId?: string): Promise<WorkerInfo[]> {
     let _clusterId = clusterId || this.clusterId
     if (!_clusterId) {
@@ -274,7 +283,7 @@ export class OnChainRegistry {
           systemContractKey,
           provider
         )
-        this.#loggerContract = await PinkLoggerContractPromise.create(this.api, this, this.#systemContract)
+        this.#loggerContract = await PinkLoggerContractPromise.create(this)
       } else {
         throw new Error(`System contract not found: ${systemContractId}`)
       }
@@ -320,8 +329,8 @@ export class OnChainRegistry {
             v1: [endpoint],
           },
         }
-        this.#ready = true
         await this.prepareSystemOrThrows(clusterInfo)
+        this.#ready = true
         return
       }
 
@@ -370,8 +379,8 @@ export class OnChainRegistry {
                 v1: [phactory.endpoint],
               },
             }
-            this.#ready = true
             await this.prepareSystemOrThrows(clusterInfo)
+            this.#ready = true
           } else {
             throw new Error(`Unknown strategy: ${args[0].strategy}`)
           }
@@ -415,8 +424,8 @@ export class OnChainRegistry {
               default: pruntimeURL,
             },
           }
-          this.#ready = true
           await this.prepareSystemOrThrows(clusterInfo)
+          this.#ready = true
         } else {
           const worker = args[0] as WorkerInfo
           const clusterInfo = await this.getClusterInfoById(worker.clusterId)
@@ -427,8 +436,8 @@ export class OnChainRegistry {
           this.clusterId = worker.clusterId
           this.clusterInfo = clusterInfo
           this.workerInfo = worker
-          this.#ready = true
           await this.prepareSystemOrThrows(clusterInfo)
+          this.#ready = true
         }
         return
       }
@@ -527,7 +536,7 @@ export class OnChainRegistry {
           systemContractKey,
           provider
         )
-        this.#loggerContract = await PinkLoggerContractPromise.create(this.api, this, this.#systemContract)
+        this.#loggerContract = await PinkLoggerContractPromise.create(this)
       } else {
         throw new Error(`System contract not found: ${systemContractId}`)
       }
@@ -578,7 +587,7 @@ export class OnChainRegistry {
     }
   }
 
-  transferToCluster(address: string | AccountId, amount: number | string | BN) {
+  transferToCluster(address: string | AccountId, amount: number | string | BN | bigint) {
     return this.api.tx.phalaPhatContracts.transferToCluster(amount, this.clusterId, address)
   }
 
